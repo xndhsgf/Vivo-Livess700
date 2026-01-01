@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, User, Zap, LogIn, UserPlus, Download, ShieldCheck } from 'lucide-react';
+// Added missing 'X' icon to the lucide-react imports
+import { Mail, Lock, User, Zap, LogIn, UserPlus, Download, ShieldCheck, Share, PlusSquare, X } from 'lucide-react';
 import { UserLevel, User as UserType } from '../types';
 import { auth, db } from '../services/firebase';
 import { 
@@ -30,11 +31,18 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuth, appLogo, canInstall, on
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isIOS, setIsIOS] = useState(false);
+  const [showIOSInstructions, setShowIOSInstructions] = useState(false);
 
   const LOGO = appLogo || 'https://storage.googleapis.com/static.aistudio.google.com/stables/2025/03/06/f0e64906-e7e0-4a87-af9b-029e2467d302/f0e64906-e7e0-4a87-af9b-029e2467d302.png';
 
   useEffect(() => {
     const timer = setTimeout(() => setShowSplash(false), 2000);
+    // التحقق من آيفون
+    const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    setIsIOS(isIosDevice && !isStandalone);
+    
     return () => clearTimeout(timer);
   }, []);
 
@@ -105,21 +113,41 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuth, appLogo, canInstall, on
           <p className="text-slate-500 text-[8px] font-black mt-1 tracking-widest uppercase">VIVO LIVE OFFICIAL</p>
         </div>
 
-        {/* زر تثبيت التطبيق الرسمي الاحترافي */}
+        {/* زر تثبيت التطبيق الرسمي - أندرويد */}
         <AnimatePresence>
           {canInstall && (
             <motion.button
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              exit={{ y: -20, opacity: 0 }}
               onClick={onInstall}
-              className="w-full bg-gradient-to-r from-blue-600 to-indigo-700 p-3 rounded-2xl flex items-center justify-between border border-white/10 shadow-lg active:scale-95 transition-all mb-2"
+              className="w-full bg-gradient-to-r from-blue-600 to-indigo-700 p-3 rounded-2xl flex items-center justify-between border border-white/10 shadow-lg active:scale-95 transition-all mb-1"
             >
               <div className="flex items-center gap-3">
                  <div className="bg-white/10 p-2 rounded-xl"><Download size={18} className="text-white" /></div>
                  <div className="text-right">
                     <p className="text-[10px] font-black text-white leading-tight">تثبيت التطبيق الرسمي</p>
-                    <p className="text-[8px] text-white/60">للحصول على كامل المميزات</p>
+                    <p className="text-[8px] text-white/60">للحصول على تجربة كاملة</p>
+                 </div>
+              </div>
+              <ShieldCheck size={20} className="text-emerald-400" />
+            </motion.button>
+          )}
+        </AnimatePresence>
+
+        {/* زر تثبيت التطبيق الرسمي - آيفون */}
+        <AnimatePresence>
+          {isIOS && (
+            <motion.button
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              onClick={() => setShowIOSInstructions(true)}
+              className="w-full bg-gradient-to-r from-blue-600 to-indigo-700 p-3 rounded-2xl flex items-center justify-between border border-white/10 shadow-lg active:scale-95 transition-all mb-1"
+            >
+              <div className="flex items-center gap-3">
+                 <div className="bg-white/10 p-2 rounded-xl"><PlusSquare size={18} className="text-white" /></div>
+                 <div className="text-right">
+                    <p className="text-[10px] font-black text-white leading-tight">تثبيت على آيفون</p>
+                    <p className="text-[8px] text-white/60">أضف للشاشة الرئيسية</p>
                  </div>
               </div>
               <ShieldCheck size={20} className="text-emerald-400" />
@@ -169,6 +197,33 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuth, appLogo, canInstall, on
           </div>
         </div>
       </motion.div>
+
+      {/* مودال تعليمات آيفون */}
+      <AnimatePresence>
+        {showIOSInstructions && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md">
+             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-slate-900 border border-blue-500/30 rounded-[2.5rem] p-8 w-full max-w-sm text-center relative">
+                {/* Fixed: Added missing X icon for the modal close button */}
+                <button onClick={() => setShowIOSInstructions(false)} className="absolute top-4 right-4 text-slate-500"><X size={24}/></button>
+                <div className="w-20 h-20 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                   <PlusSquare size={40} className="text-blue-400" />
+                </div>
+                <h3 className="text-xl font-black text-white mb-4">تثبيت على آيفون</h3>
+                <div className="space-y-4 text-right" dir="rtl">
+                   <p className="text-sm text-slate-300 flex items-center gap-3">
+                      <span className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-[10px] font-black">1</span>
+                      اضغط على زر المشاركة <Share size={18} className="text-blue-400" /> في الأسفل
+                   </p>
+                   <p className="text-sm text-slate-300 flex items-center gap-3">
+                      <span className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-[10px] font-black">2</span>
+                      اختر "إضافة إلى الشاشة الرئيسية"
+                   </p>
+                </div>
+                <button onClick={() => setShowIOSInstructions(false)} className="mt-8 w-full py-4 bg-blue-600 text-white font-black rounded-2xl">فهمت</button>
+             </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -109,11 +109,13 @@ export default function App() {
   const t = translations[language];
 
   useEffect(() => {
-    // التحقق من إمكانية تثبيت التطبيق
-    window.addEventListener('beforeinstallprompt', (e) => {
+    // التقاط حدث تثبيت التطبيق
+    const handleBeforeInstall = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
-    });
+      console.log('App is installable, prompt deferred');
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
 
     const qAnnouncements = query(
       collection(db, 'global_announcements'),
@@ -185,6 +187,7 @@ export default function App() {
     } else { setInitializing(false); }
     
     return () => { 
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
       unsubAnnouncements();
       unsubSettings(); 
       unsubRooms(); 
@@ -195,13 +198,16 @@ export default function App() {
   }, []);
 
   const handleInstallApp = async () => {
-    if (!deferredPrompt) return;
+    if (!deferredPrompt) {
+      alert('التطبيق مثبت بالفعل أو المتصفح لا يدعم التثبيت المباشر. يمكنك التثبيت يدوياً عبر "إضافة إلى الشاشة الرئيسية".');
+      return;
+    }
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === 'accepted') {
-      console.log('User accepted install');
+      console.log('User installed the app');
+      setDeferredPrompt(null);
     }
-    setDeferredPrompt(null);
   };
 
   const handleUpdateUser = async (updatedData: any) => {
